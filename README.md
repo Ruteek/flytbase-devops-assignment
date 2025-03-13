@@ -1,6 +1,117 @@
  Project Overview
 This project deploys Nginx and WebSocket applications on AWS EKS using Kubernetes.
+ How to Create Docker Images for Nginx & WebSocket Applications
+This section explains how to build Docker images for both Nginx and WebSocket applications and push them to Docker Hub or Amazon Elastic Container Registry (ECR).
 
+✅ Step 1: Create a Dockerfile for WebSocket Application
+1️⃣ Navigate to the WebSocket application directory (websocket-app/).
+2️⃣ Create a file named Dockerfile:
+
+📌 websocket-app/Dockerfile
+
+dockerfile
+Copy
+Edit
+# Use Python as base image
+FROM python:3.9
+
+# Set working directory
+WORKDIR /app
+
+# Copy application files
+COPY . /app
+
+# Install dependencies
+RUN pip install -r requirements.txt
+
+# Expose WebSocket port
+EXPOSE 8080
+
+# Run the WebSocket server
+CMD ["python", "websocket_server.py"]
+✅ Step 2: Create a Dockerfile for Nginx
+1️⃣ Navigate to the Nginx directory (nginx/).
+2️⃣ Create a file named Dockerfile:
+
+📌 nginx/Dockerfile
+
+dockerfile
+Copy
+Edit
+# Use official Nginx base image
+FROM nginx:latest
+
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
+✅ Step 3: Build Docker Images
+Run the following commands from the root project directory:
+
+Build WebSocket Image
+sh
+Copy
+Edit
+docker build -t websocket-app:v1 ./websocket-app
+Build Nginx Image
+sh
+Copy
+Edit
+docker build -t nginx-app:v1 ./nginx
+✅ Step 4: Push Docker Images
+Option 1: Push to Docker Hub
+1️⃣ Log in to Docker Hub
+
+sh
+Copy
+Edit
+docker login
+2️⃣ Tag and Push WebSocket Image
+
+sh
+Copy
+Edit
+docker tag websocket-app:v1 your-dockerhub-username/websocket-app:v1
+docker push your-dockerhub-username/websocket-app:v1
+3️⃣ Tag and Push Nginx Image
+
+sh
+Copy
+Edit
+docker tag nginx-app:v1 your-dockerhub-username/nginx-app:v1
+docker push your-dockerhub-username/nginx-app:v1
+Option 2: Push to AWS ECR
+1️⃣ Authenticate with AWS ECR
+
+sh
+Copy
+Edit
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+2️⃣ Create ECR Repository
+
+sh
+Copy
+Edit
+aws ecr create-repository --repository-name websocket-app
+aws ecr create-repository --repository-name nginx-app
+3️⃣ Tag & Push WebSocket Image
+
+sh
+Copy
+Edit
+docker tag websocket-app:v1 <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/websocket-app:v1
+docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/websocket-app:v1
+4️⃣ Tag & Push Nginx Image
+
+sh
+Copy
+Edit
+docker tag nginx-app:v1 <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/nginx-app:v1
+docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/nginx-app:v1
 Nginx serves static files and acts as a reverse proxy.
 WebSocket Service enables real-time communication.
 Jenkins CI/CD automates the deployment process.
